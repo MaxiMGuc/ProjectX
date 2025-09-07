@@ -19,10 +19,11 @@ export default function ArraySortVisualizer() {
   const [currentStep, setCurrentStep] = useState(0);
   const [running, setRunning] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
+  const [jsonData, setJsonData] = useState({ array: [] as number[], method: sortMethod });
 
   function parseArray(input: string): number[] | null {
     if (input.trim().length === 0) return [];
-    const parts = input.split(/[,\s]+/).map((x) => x.trim());
+    const parts = input.split(/[\s,]+/).map((x) => x.trim());
     const nums: number[] = [];
     for (let p of parts) {
       if (p === "") continue;
@@ -44,28 +45,28 @@ export default function ArraySortVisualizer() {
   const sortingAlgorithms: { [key: string]: (arr: ArrayItem[]) => Step[] } = {
     "Пузырьковая": bubbleSortWithSteps,
     "Вставками": insertionSortWithSteps,
-    "Выбором": selectionSortWithSteps
+    "Выбором": selectionSortWithSteps,
   };
 
   function bubbleSortWithSteps(arr: ArrayItem[]): Step[] {
     const steps: Step[] = [];
-    const arrayCopy = arr.map(a => ({ ...a }));
+    const arrayCopy = arr.map((a) => ({ ...a }));
     const n = arrayCopy.length;
     for (let i = 0; i < n - 1; i++) {
       for (let j = 0; j < n - i - 1; j++) {
-        arrayCopy[j].state = 'comparing';
-        arrayCopy[j + 1].state = 'comparing';
-        steps.push({ array: arrayCopy.map(a => ({ ...a })) });
+        arrayCopy[j].state = "comparing";
+        arrayCopy[j + 1].state = "comparing";
+        steps.push({ array: arrayCopy.map((a) => ({ ...a })) });
 
         if (arrayCopy[j].value > arrayCopy[j + 1].value) {
           [arrayCopy[j], arrayCopy[j + 1]] = [arrayCopy[j + 1], arrayCopy[j]];
-          arrayCopy[j].state = 'swapped';
-          arrayCopy[j + 1].state = 'swapped';
-          steps.push({ array: arrayCopy.map(a => ({ ...a })) });
+          arrayCopy[j].state = "swapped";
+          arrayCopy[j + 1].state = "swapped";
+          steps.push({ array: arrayCopy.map((a) => ({ ...a })) });
         }
 
-        arrayCopy[j].state = 'default';
-        arrayCopy[j + 1].state = 'default';
+        arrayCopy[j].state = "default";
+        arrayCopy[j + 1].state = "default";
       }
     }
     return steps;
@@ -73,41 +74,41 @@ export default function ArraySortVisualizer() {
 
   function insertionSortWithSteps(arr: ArrayItem[]): Step[] {
     const steps: Step[] = [];
-    const arrayCopy = arr.map(a => ({ ...a }));
+    const arrayCopy = arr.map((a) => ({ ...a }));
     for (let i = 1; i < arrayCopy.length; i++) {
       let key = arrayCopy[i].value;
       let j = i - 1;
       while (j >= 0 && arrayCopy[j].value > key) {
-        arrayCopy[j].state = 'comparing';
+        arrayCopy[j].state = "comparing";
         arrayCopy[j + 1].value = arrayCopy[j].value;
-        arrayCopy[j].state = 'default';
-        steps.push({ array: arrayCopy.map(a => ({ ...a })) });
+        arrayCopy[j].state = "default";
+        steps.push({ array: arrayCopy.map((a) => ({ ...a })) });
         j--;
       }
       arrayCopy[j + 1].value = key;
-      steps.push({ array: arrayCopy.map(a => ({ ...a, state: 'swapped' })) });
-      arrayCopy.forEach(a => a.state = 'default');
+      steps.push({ array: arrayCopy.map((a) => ({ ...a, state: "swapped" })) });
+      arrayCopy.forEach((a) => (a.state = "default"));
     }
     return steps;
   }
 
   function selectionSortWithSteps(arr: ArrayItem[]): Step[] {
     const steps: Step[] = [];
-    const arrayCopy = arr.map(a => ({ ...a }));
+    const arrayCopy = arr.map((a) => ({ ...a }));
     const n = arrayCopy.length;
     for (let i = 0; i < n - 1; i++) {
       let minIdx = i;
       for (let j = i + 1; j < n; j++) {
-        arrayCopy[j].state = 'comparing';
-        steps.push({ array: arrayCopy.map(a => ({ ...a })) });
+        arrayCopy[j].state = "comparing";
+        steps.push({ array: arrayCopy.map((a) => ({ ...a })) });
         if (arrayCopy[j].value < arrayCopy[minIdx].value) minIdx = j;
-        arrayCopy[j].state = 'default';
+        arrayCopy[j].state = "default";
       }
       [arrayCopy[i], arrayCopy[minIdx]] = [arrayCopy[minIdx], arrayCopy[i]];
-      arrayCopy[i].state = 'swapped';
-      arrayCopy[minIdx].state = 'swapped';
-      steps.push({ array: arrayCopy.map(a => ({ ...a })) });
-      arrayCopy.forEach(a => a.state = 'default');
+      arrayCopy[i].state = "swapped";
+      arrayCopy[minIdx].state = "swapped";
+      steps.push({ array: arrayCopy.map((a) => ({ ...a })) });
+      arrayCopy.forEach((a) => (a.state = "default"));
     }
     return steps;
   }
@@ -115,7 +116,7 @@ export default function ArraySortVisualizer() {
   function startSort() {
     const nums = parseArray(inputValue);
     if (!nums) {
-      alert('Некорректный ввод массива');
+      alert("Некорректный ввод массива");
       return;
     }
 
@@ -131,6 +132,14 @@ export default function ArraySortVisualizer() {
     setCurrentStep(0);
     setRunning(true);
   }
+
+  // Автоматически обновляем JSON при изменении массива или метода сортировки
+  useEffect(() => {
+    setJsonData({
+      array: array.map((item) => item.value),
+      method: sortMethod,
+    });
+  }, [array, sortMethod]);
 
   useEffect(() => {
     if (!running || currentStep >= steps.length) {
@@ -161,7 +170,7 @@ export default function ArraySortVisualizer() {
 
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-gray-700">Метод сортировки</legend>
-          {Object.keys(sortingAlgorithms).map(method => (
+          {Object.keys(sortingAlgorithms).map((method) => (
             <label key={method} className="flex items-center gap-2">
               <input
                 type="radio"
@@ -187,11 +196,11 @@ export default function ArraySortVisualizer() {
             <div
               key={idx}
               className={`h-12 w-12 flex items-center justify-center border text-white font-bold ${
-                item.state === 'comparing'
-                  ? 'bg-red-500'
-                  : item.state === 'swapped'
-                  ? 'bg-green-500'
-                  : 'bg-gray-400'
+                item.state === "comparing"
+                  ? "bg-red-500"
+                  : item.state === "swapped"
+                  ? "bg-green-500"
+                  : "bg-gray-400"
               } transition-all duration-300`}
             >
               {item.value}
@@ -199,7 +208,15 @@ export default function ArraySortVisualizer() {
           ))}
         </div>
 
-        {duration && <p className="mt-2 text-sm text-gray-700">Длительность сортировки: {duration.toFixed(3)} мс</p>}
+        {duration && (
+          <p className="mt-2 text-sm text-gray-700">
+            Длительность сортировки: {duration.toFixed(3)} мс
+          </p>
+        )}
+
+        {/*<pre className="mt-4 bg-gray-100 p-4 rounded-lg w-full overflow-x-auto">
+          {JSON.stringify(jsonData, null, 2)}
+        </pre>*/}
       </div>
     </div>
   );
